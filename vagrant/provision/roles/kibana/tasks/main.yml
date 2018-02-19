@@ -1,6 +1,6 @@
 ---
 - name: install curl and unzip
-  apt: pkg={{item}} state=present force=yes
+  apt: pkg={{item}} state=present force=yes cache_valid_time=3600
   with_items:
       - unzip
       - curl
@@ -10,7 +10,7 @@
 
 - group: name=www state=present
 - user: name=vagrant shell=/bin/bash groups=www append=yes
-- file: path=/var/www/ owner=vagrant group=www mode=4755 recurse=yes
+- file: path=/var/www/ owner=vagrant group=www mode=04755 recurse=yes
 
 - name: unarchive kibana
   sudo : yes

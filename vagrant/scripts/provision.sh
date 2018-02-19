@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -x
 
 # Local provisioning mode (host is Ansible controller)
 if [ $1 = "--local" ]; then
@@ -10,10 +10,25 @@ if [ $1 = "--local" ]; then
   # Force reset local GIT repo to match Github
   git fetch --all
   git reset --hard origin/master
+
+  # Exclude global variables from rsync, but create if it doesn't exist
+  if [ ! -f "/provision/vars/default.yml" ]; then
+    cp vagrant/provision/vars/default.yml /provision/vars/default.yml
+  fi
+
   # Stick to branch in vars/default.yml
-  github_branch=`awk '/github_branch/ {printf "%s",$2;exit}' vagrant/provision/vars/default.yml`
+  github_branch=`awk '/github_branch/ {printf "%s",$2;exit}' /provision/vars/default.yml`
+  
+  # Clean local tags if they changed on Github
+  if [ github_branch != "master" ]; then
+    github_tag=`echo ${github_branch} | awk -F "/" '/tags/ {print $3}'`
+    git tag -d ${github_tag}
+    git fetch origin --tags
+  fi
+  
   git checkout ${github_branch}
-  sudo rsync -aHAXvh --update vagrant/provision /
+
+  sudo rsync -aHAXvh --update --exclude 'vagrant/provision/vars/default.yml' vagrant/provision /
   shift
 fi
 
